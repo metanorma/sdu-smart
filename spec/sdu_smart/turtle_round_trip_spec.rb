@@ -42,11 +42,14 @@ RSpec.describe "Turtle round-trip" do
       pronunciation: "lengθ",
       term_form_type: "fullForm",
       part_of_speech_type: "noun",
+      used_in_country: ["GB", "US"],
+      literal_form: "length",
     )
     restored = SduSmart::Term.from_turtle(term.to_turtle)
     expect(restored.pronunciation).to eq("lengθ")
     expect(restored.term_form_type).to eq("fullForm")
     expect(restored.part_of_speech_type).to eq("noun")
+    expect(restored.literal_form).to eq("length")
   end
 
   it "round-trips ProvisionSupplement" do

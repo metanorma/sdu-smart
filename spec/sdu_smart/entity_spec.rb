@@ -159,7 +159,7 @@ RSpec.describe SduSmart::Term do
   end
 
   it "maps used_in_country to smart:usedInCountry" do
-    term = described_class.new(id: "t1", used_in_country: "GB")
+    term = described_class.new(id: "t1", used_in_country: ["GB", "US"])
     expect(term.to_turtle).to include("smart:usedInCountry")
   end
 
@@ -171,6 +171,11 @@ RSpec.describe SduSmart::Term do
   it "maps term_form_type to smart:hasTermFormType" do
     term = described_class.new(id: "t1", term_form_type: "fullForm")
     expect(term.to_turtle).to include("smart:hasTermFormType")
+  end
+
+  it "maps literal_form to skosxl:literalForm" do
+    term = described_class.new(id: "t1", literal_form: "intended use")
+    expect(term.to_turtle).to include("skosxl:literalForm")
   end
 end
 
