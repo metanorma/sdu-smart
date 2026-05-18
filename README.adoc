@@ -75,6 +75,57 @@ term = SduSmart::Term.new(
 )
 ----
 
+=== Create term entries
+
+[source,ruby]
+----
+entry = SduSmart::TermEntry.new(
+  id: "te-length",
+  definition: "extent of something from end to end",
+  identifier: "3-1",
+  pref_label: ["term-length"],
+  alt_label: ["term-len"],
+  scope_note: "Applies to vector quantities",
+  bindingness_type: "normative",
+  is_part_of: "clause-3-1",
+)
+----
+
+=== Create annotations
+
+Annotations link provisions to specific locations in documents:
+
+[source,ruby]
+----
+selector = SduSmart::Selector.new(
+  id: "sel-4-1",
+  value: "xpath:///p[1]",
+)
+
+resource = SduSmart::SpecificResource.new(
+  id: "sr-4-1",
+  has_source: "iso-80000-1",
+  has_selector: "sel-4-1",
+)
+
+annotation = SduSmart::Annotation.new(
+  id: "ann-4-1",
+  has_target: "sr-4-1",
+  has_body: "prov-4-1",
+)
+----
+
+=== Track provenance
+
+[source,ruby]
+----
+derivation = SduSmart::Derivation.new(
+  id: "deriv-length",
+  entity: "iso-80000-3-2006",
+  change_note: "Updated definition from 2006 edition",
+)
+----
+
 === Serialize to Turtle
 
 [source,ruby]
@@ -91,6 +142,12 @@ puts clause.to_turtle
 #   smart:hasBindingnessType "normative" ;
 #   smart:hasSectionNumber "4" ;
 #   dcterms:title "Quantities" .
+
+puts annotation.to_turtle
+# <https://w3id.org/standards/smart/ontologies/core/ann-4-1>
+#   a oa:Annotation ;
+#   oa:hasTarget "sr-4-1" ;
+#   oa:hasBody "prov-4-1" .
 ----
 
 === Round-trip serialization
@@ -101,6 +158,11 @@ turtle = doc.to_turtle
 restored = SduSmart::PublicationDocument.from_turtle(turtle)
 restored.publication_type  # => "internationalStandard"
 restored.issued            # => "2022"
+
+turtle = entry.to_turtle
+restored = SduSmart::TermEntry.from_turtle(turtle)
+restored.definition        # => "extent of something from end to end"
+restored.identifier        # => "3-1"
 ----
 
 === Use taxonomies
@@ -130,8 +192,9 @@ SduSmart::Taxonomy::BindingnessType::VALUES
 
 === Class hierarchy
 
-All model classes inherit from `Lutaml::Model::Serializable` through the
-`SduSmart::Entity` base class:
+All model classes inherit from `Lutaml::Model::Serializable`. Entity subclasses
+go through `SduSmart::Entity`; non-Entity classes (annotation, provenance) and
+taxonomy concepts inherit directly from `Serializable`:
 
 [source]
 ----
@@ -155,10 +218,10 @@ Lutaml::Model::Serializable
 │   ├── Agent
 │   │   └── Organization
 │   └── Activity
-├── SduSmart::Annotation      (oa:Annotation)
-├── SduSmart::SpecificResource (oa:SpecificResource)
-├── SduSmart::Selector         (oa:Selector)
-├── SduSmart::Derivation       (prov:Derivation)
+├── SduSmart::Annotation       (oa:Annotation)
+├── SduSmart::SpecificResource  (oa:SpecificResource)
+├── SduSmart::Selector          (oa:Selector)
+├── SduSmart::Derivation        (prov:Derivation)
 └── SduSmart::Taxonomy::Concept
     ├── BindingnessType
     ├── ProvisionType
@@ -171,8 +234,8 @@ Lutaml::Model::Serializable
 
 === Entity base class
 
-`SduSmart::Entity` (`lib/sdu_smart/entity.rb`) is the root of the hierarchy.
-It declares `attribute :id` and sets the RDF subject pattern:
+`SduSmart::Entity` (`lib/sdu_smart/entity.rb`) is the root of the entity
+hierarchy. It declares `attribute :id` and sets the RDF subject pattern:
 
 ```
 https://w3id.org/standards/smart/ontologies/core/{id}
@@ -187,16 +250,37 @@ The 8 concrete provision subtypes (`Statement`, `Requirement`, etc.) share the
 same attributes (`bindingness_type`, `provision_type`, `is_part_of`, `distribution`, etc.) but
 each declares a distinct `rdf:type` (e.g. `smart:Statement`, `smart:Requirement`).
 
+=== TermEntry
+
+TermEntry models a terminological entry — the root element of a concept
+definition. It carries a rich set of predicates from the SHACL shapes:
+
+* `skos:definition` — concept definition
+* `dcterms:identifier` — entry identifier (e.g. clause number)
+* `skos:scopeNote` — scope clarification
+* `skosxl:prefLabel` / `skosxl:altLabel` — preferred and alternative terms (IRI references to Term)
+* `smart:deprecatedLabel` — deprecated term labels (IRI references to Term)
+* `prov:qualifiedDerivation` — provenance chain (IRI references to Derivation)
+* `smart:hasBindingnessType` — bindingness classification
+* `dcterms:isPartOf` — parent clause or document
+
+Domain gems subclass TermEntry to add domain-specific attributes and RDF types.
+
 === Annotation model
 
 The W3C Web Annotation model links provisions to specific locations in
 publication documents. These classes inherit from `Lutaml::Model::Serializable`
-directly (not `Entity`) since their RDF types use the `oa:` and `prov:` namespaces:
+directly (not `Entity`) since their RDF types use the `oa:` namespace:
 
 * **Annotation** (`oa:Annotation`) — links a target (SpecificResource) to a body (Provision)
-* **SpecificResource** (`oa:SpecificResource`) — references a source document, selector, with optional successor chain
-* **Selector** (`oa:Selector`) — holds an `rdf:value` fragment identifier
-* **Derivation** (`prov:Derivation`) — tracks term provenance with `prov:entity` and `skos:changeNote`
+* **SpecificResource** (`oa:SpecificResource`) — references a source document (PublicationDocument) via a Selector, with optional successor chain (`smart:isSuccessorOf`), text value (`rdf:value`), and format (`dcterms:format`)
+* **Selector** (`oa:Selector`) — holds an `rdf:value` fragment identifier (e.g. XPath, CSS selector)
+
+=== Provenance model
+
+* **Derivation** (`prov:Derivation`) — tracks term provenance with `prov:entity` (source IRI) and `skos:changeNote`
+
+Linked from TermEntry via `prov:qualifiedDerivation`.
 
 === Taxonomy classes
 
@@ -265,7 +349,8 @@ Defined in `lib/sdu_smart/rdf/namespaces/` as `Lutaml::Rdf::Namespace` subclasse
 |===
 
 Entity `rdf do` blocks also reference built-in lutaml namespaces (`dcterms:`,
-`skos:`) for predicates like `dcterms:issued` and `skos:prefLabel`.
+`skos:`, `rdf:`) for predicates like `dcterms:issued`, `skos:definition`, and
+`rdf:value`.
 
 === Extension pattern for domain gems
 
@@ -276,15 +361,24 @@ domain-specific attributes and RDF types:
 ----
 # In a domain gem (e.g. isq)
 class Isq::Quantity < SduSmart::TermEntry
-  attribute :definition, :string
   attribute :has_unit, :string
 
   rdf do
     type "isoiec80000:Quantity"
-    # ...
+    # TermEntry predicates are NOT inherited (lutaml-model replaces rdf blocks)
+    # Re-declare needed predicates or use the TermEntry base class for serialization
   end
 end
 ----
+
+[NOTE]
+====
+Subclass `rdf do` blocks **replace** (not merge with) parent `rdf do` blocks.
+This means provision subtypes (Statement, Requirement, etc.) only output their
+`rdf:type` in Turtle — they don't serialize inherited predicates like
+`hasBindingnessType`. To serialize/deserialize provision predicates, use the
+`Provision` base class directly.
+====
 
 == Development
 
