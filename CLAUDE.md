@@ -28,6 +28,12 @@ bundle exec rake spec             # run specs via Rake
 https://w3id.org/standards/smart/ontologies/core/{id}
 ```
 
+The `id` is only used in the subject URI — it is NOT mapped to `dcterms:title`. Only `Clause` maps its `title` attribute to `dcterms:title`.
+
+### lutaml-model RDF subclass behavior
+
+Subclass `rdf do` blocks **replace** (not merge with) parent `rdf do` blocks. This means provision subtypes (Statement, Requirement, etc.) only output their `rdf:type` in Turtle — they don't serialize inherited predicates like `hasBindingnessType`. To serialize/deserialize provision predicates, use the `Provision` base class directly.
+
 ### Entity hierarchy
 
 - **Provision** (abstract) — 8 concrete subtypes in `lib/sdu_smart/provision/`, each with its own `rdf:type` (e.g. `smart:Statement`, `smart:Requirement`). Subtypes share the same attribute set but differ in RDF type.
@@ -60,11 +66,18 @@ Defined in `lib/sdu_smart/rdf/namespaces/`. Each namespace is a `Lutaml::Rdf::Na
 
 `lib/sdu_smart.rb` uses Ruby `autoload` for all constants. Sub-namespaces (`Provision`, `Taxonomy`, `Rdf::Namespaces`) also use `autoload` in their parent files.
 
+## Ontology compliance
+
+`reference-docs/smartsdu-information-model-share-c6362d946900/` contains the authoritative SmartSDU information model. Key files:
+- `information_model/ontologies/core-ontology.ttl` — class and property definitions
+- `information_model/schemas/shacl/core-ontology.shacl.ttl` — SHACL shapes for entities
+- `information_model/schemas/shacl/terminology-model.shacl.ttl` — SHACL for TermEntry/Term
+- `information_model/schemas/shacl/annotation-ontology.shacl.ttl` — annotation model (not yet implemented)
+- `information_model/taxonomies/*.ttl` — SKOS taxonomy instances
+
+Specs verify compliance: class hierarchy, RDF types, predicate names, taxonomy VALUES, subject URI patterns, and round-trip serialization.
+
 ## Dependencies
 
 - `lutaml-model ~> 0.8.0` — serialization framework (JSON, XML, YAML, TOML, RDF)
 - Development: `rdf-turtle ~> 3.3`, `rake`, `rspec`
-
-## Reference docs
-
-`reference-docs/smartsdu-information-model-share-c6362d946900/` contains the authoritative SmartSDU information model: OWL ontology, SHACL shapes, and SKOS taxonomies in Turtle format. Use it to verify RDF predicate and class design matches the specification.

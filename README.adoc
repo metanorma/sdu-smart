@@ -1,10 +1,10 @@
-= SDU SMART Core Ontology in Ruby (sdu_smart)
+= SDU SMART Core Ontology (sdu_smart)
 :toc:
 :toclevels: 2
 
 == Purpose
 
-Sdu_smart provides the
+sdu_smart provides the
 https://w3id.org/standards/smart/ontologies/core/[SmartSDU Core Ontology]
 information model as a Ruby gem. It models the entities found in standards
 documents — provisions, terms, clauses, publications, agents — and serializes
@@ -189,7 +189,7 @@ Taxonomy types and their values:
 | code, figure, mathematicalFormula, table, textual
 
 | `PublicationDocumentType`
-| internationalStandard, …
+| guide, publiclyAvailableSpecification, technicalReport, technicalSpecification, normativeDocument, standard, internationalStandard
 
 | `ProvisionSupplementType`
 | example, footnote, note
