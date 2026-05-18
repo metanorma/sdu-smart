@@ -16,6 +16,8 @@ domain-specific subclasses.
 Key features:
 
 * **Entity model**: Provision, Clause, TermEntry, PublicationDocument, Agent, Activity
+* **Annotation model**: Annotation, SpecificResource, Selector (W3C Web Annotation)
+* **Provenance model**: Derivation (prov:Derivation)
 * **SKOS taxonomies**: Controlled vocabularies for bindingness, provision types, term forms
 * **RDF serialization**: Turtle output and round-trip parsing via `rdf do` mapping blocks
 * **Extensible**: Domain gems subclass `TermEntry` and `Provision` for domain-specific types
@@ -105,11 +107,19 @@ restored.issued            # => "2022"
 
 [source,ruby]
 ----
+# Create via constructor
 bt = SduSmart::Taxonomy::BindingnessType.new(label: "normative")
 puts bt.to_turtle
 # <https://w3id.org/standards/smart/taxonomies/bindingness-type/normative>
 #   a smart:BindingnessType ;
 #   skos:prefLabel "normative" .
+
+# Create via validated factory
+bt = SduSmart::Taxonomy::BindingnessType.fetch("normative")
+bt.label  # => "normative"
+
+SduSmart::Taxonomy::BindingnessType.fetch("invalid")
+# => ArgumentError: invalid value 'invalid'. Valid: normative, informative
 
 # Valid values are defined as constants
 SduSmart::Taxonomy::BindingnessType::VALUES
@@ -125,25 +135,38 @@ All model classes inherit from `Lutaml::Model::Serializable` through the
 
 [source]
 ----
-SduSmart::Entity
-├── Provision (abstract)
-│   ├── Statement
-│   ├── Instruction
-│   ├── Requirement
-│   ├── Recommendation
-│   ├── Permission
-│   ├── Capability
-│   ├── Possibility
-│   └── ExternalConstraint
-├── ProvisionSet
-│   └── Clause
-├── ProvisionSupplement
-├── TermEntry          ← extended by domain gems (e.g. isq)
-├── Term
-├── PublicationDocument
-├── Agent
-│   └── Organization
-└── Activity
+Lutaml::Model::Serializable
+├── SduSmart::Entity
+│   ├── Provision (abstract)
+│   │   ├── Statement
+│   │   ├── Instruction
+│   │   ├── Requirement
+│   │   ├── Recommendation
+│   │   ├── Permission
+│   │   ├── Capability
+│   │   ├── Possibility
+│   │   └── ExternalConstraint
+│   ├── ProvisionSet
+│   │   └── Clause
+│   ├── ProvisionSupplement
+│   ├── TermEntry          ← extended by domain gems (e.g. isq)
+│   ├── Term
+│   ├── PublicationDocument
+│   ├── Agent
+│   │   └── Organization
+│   └── Activity
+├── SduSmart::Annotation      (oa:Annotation)
+├── SduSmart::SpecificResource (oa:SpecificResource)
+├── SduSmart::Selector         (oa:Selector)
+├── SduSmart::Derivation       (prov:Derivation)
+└── SduSmart::Taxonomy::Concept
+    ├── BindingnessType
+    ├── ProvisionType
+    ├── PublicationComponentType
+    ├── PublicationDocumentType
+    ├── ProvisionSupplementType
+    ├── PartOfSpeechType
+    └── TermFormType
 ----
 
 === Entity base class
@@ -161,17 +184,30 @@ predicates via `rdf do` blocks.
 === Provision subtypes
 
 The 8 concrete provision subtypes (`Statement`, `Requirement`, etc.) share the
-same attributes (`bindingness_type`, `provision_type`, `is_part_of`, etc.) but
+same attributes (`bindingness_type`, `provision_type`, `is_part_of`, `distribution`, etc.) but
 each declares a distinct `rdf:type` (e.g. `smart:Statement`, `smart:Requirement`).
+
+=== Annotation model
+
+The W3C Web Annotation model links provisions to specific locations in
+publication documents. These classes inherit from `Lutaml::Model::Serializable`
+directly (not `Entity`) since their RDF types use the `oa:` and `prov:` namespaces:
+
+* **Annotation** (`oa:Annotation`) — links a target (SpecificResource) to a body (Provision)
+* **SpecificResource** (`oa:SpecificResource`) — references a source document, selector, with optional successor chain
+* **Selector** (`oa:Selector`) — holds an `rdf:value` fragment identifier
+* **Derivation** (`prov:Derivation`) — tracks term provenance with `prov:entity` and `skos:changeNote`
 
 === Taxonomy classes
 
-`SduSmart::Taxonomy` contains SKOS concept classes. Unlike entity classes, they
-inherit directly from `Lutaml::Model::Serializable` (not `Entity`) and:
+`SduSmart::Taxonomy` contains SKOS concept classes. All inherit from
+`SduSmart::Taxonomy::Concept` (not `Entity`), which provides a `taxonomy` macro
+and a validated `.fetch` factory:
 
-* Declare a `VALUES` constant listing valid concept labels
-* Use `skos:prefLabel` for the label predicate
-* Use a subject pattern under `https://w3id.org/standards/smart/taxonomies/{type}/{label}`
+* Each subclass calls `taxonomy` to declare its `VALUES`, RDF type, and subject path
+* `skos:prefLabel` maps the label predicate
+* `.fetch(label)` validates against `VALUES` and raises `ArgumentError` on invalid input
+* Subject pattern: `https://w3id.org/standards/smart/taxonomies/{type}/{label}`
 
 Taxonomy types and their values:
 
@@ -217,6 +253,15 @@ Defined in `lib/sdu_smart/rdf/namespaces/` as `Lutaml::Rdf::Namespace` subclasse
 
 | `OaNamespace`
 | `oa:` → `http://www.w3.org/ns/oa#`
+
+| `DcatNamespace`
+| `dcat:` → `http://www.w3.org/ns/dcat#`
+
+| `ProvNamespace`
+| `prov:` → `http://www.w3.org/ns/prov#`
+
+| `SkosXlNamespace`
+| `skosxl:` → `http://www.w3.org/2008/05/skos-xl#`
 |===
 
 Entity `rdf do` blocks also reference built-in lutaml namespaces (`dcterms:`,
@@ -255,8 +300,8 @@ Run a single spec file or example:
 
 [source,bash]
 ----
-$ bundle exec rspec spec/sdu_smart/core_classes_spec.rb
-$ bundle exec rspec spec/sdu_smart/core_classes_spec.rb:54
+$ bundle exec rspec spec/sdu_smart/entity_spec.rb
+$ bundle exec rspec spec/sdu_smart/entity_spec.rb:54
 ----
 
 `reference-docs/` contains the authoritative SmartSDU information model (OWL

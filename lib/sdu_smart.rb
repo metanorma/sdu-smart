@@ -18,6 +18,10 @@ module SduSmart
   autoload :Term, "#{__dir__}/sdu_smart/term"
   autoload :TermEntry, "#{__dir__}/sdu_smart/term_entry"
   autoload :PublicationDocument, "#{__dir__}/sdu_smart/publication_document"
+  autoload :Annotation, "#{__dir__}/sdu_smart/annotation"
+  autoload :SpecificResource, "#{__dir__}/sdu_smart/specific_resource"
+  autoload :Selector, "#{__dir__}/sdu_smart/selector"
+  autoload :Derivation, "#{__dir__}/sdu_smart/derivation"
   autoload :Taxonomy, "#{__dir__}/sdu_smart/taxonomy"
   autoload :Rdf, "#{__dir__}/sdu_smart/rdf"
 end

@@ -2,23 +2,10 @@
 
 module SduSmart
   module Taxonomy
-    class ProvisionSupplementType < Lutaml::Model::Serializable
-      attribute :label, :string
-
-      VALUES = %w[example footnote note].freeze
-
-      rdf do
-        namespace SduSmart::Rdf::Namespaces::SmartNamespace,
-                  Lutaml::Rdf::Namespaces::SkosNamespace
-
-        subject { |m| "https://w3id.org/standards/smart/taxonomies/provision-supplement-type/#{m.label}" }
-
-        type "smart:ProvisionSupplementType"
-
-        predicate :prefLabel,
-                  namespace: Lutaml::Rdf::Namespaces::SkosNamespace,
-                  to: :label
-      end
+    class ProvisionSupplementType < Concept
+      taxonomy "ProvisionSupplementType",
+               values: %w[example footnote note],
+               subject_path: "provision-supplement-type"
     end
   end
 end
