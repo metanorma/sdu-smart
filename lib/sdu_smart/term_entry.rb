@@ -4,10 +4,20 @@ module SduSmart
   class TermEntry < Entity
     attribute :bindingness_type, :string
     attribute :is_part_of, :string
+    attribute :definition, :string
+    attribute :identifier, :string
+    attribute :scope_note, :string
+    attribute :deprecated_label, :string, collection: true
+    attribute :pref_label, :string, collection: true
+    attribute :alt_label, :string, collection: true
+    attribute :qualified_derivation, :string, collection: true
 
     rdf do
       namespace SduSmart::Rdf::Namespaces::SmartNamespace,
-                Lutaml::Rdf::Namespaces::DctermsNamespace
+                Lutaml::Rdf::Namespaces::DctermsNamespace,
+                Lutaml::Rdf::Namespaces::SkosNamespace,
+                SduSmart::Rdf::Namespaces::SkosXlNamespace,
+                SduSmart::Rdf::Namespaces::ProvNamespace
 
       subject { |m| "https://w3id.org/standards/smart/ontologies/core/#{m.id}" }
 
@@ -20,6 +30,34 @@ module SduSmart
       predicate :isPartOf,
                 namespace: Lutaml::Rdf::Namespaces::DctermsNamespace,
                 to: :is_part_of
+
+      predicate :definition,
+                namespace: Lutaml::Rdf::Namespaces::SkosNamespace,
+                to: :definition
+
+      predicate :identifier,
+                namespace: Lutaml::Rdf::Namespaces::DctermsNamespace,
+                to: :identifier
+
+      predicate :scopeNote,
+                namespace: Lutaml::Rdf::Namespaces::SkosNamespace,
+                to: :scope_note
+
+      predicate :deprecatedLabel,
+                namespace: SduSmart::Rdf::Namespaces::SmartNamespace,
+                to: :deprecated_label
+
+      predicate :prefLabel,
+                namespace: SduSmart::Rdf::Namespaces::SkosXlNamespace,
+                to: :pref_label
+
+      predicate :altLabel,
+                namespace: SduSmart::Rdf::Namespaces::SkosXlNamespace,
+                to: :alt_label
+
+      predicate :qualifiedDerivation,
+                namespace: SduSmart::Rdf::Namespaces::ProvNamespace,
+                to: :qualified_derivation
     end
   end
 end

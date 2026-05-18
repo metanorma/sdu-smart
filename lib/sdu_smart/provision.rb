@@ -16,10 +16,12 @@ module SduSmart
     attribute :publication_component_type, :string
     attribute :is_part_of, :string
     attribute :has_supplement, :string, collection: true
+    attribute :distribution, :string, collection: true
 
     rdf do
       namespace SduSmart::Rdf::Namespaces::SmartNamespace,
-                Lutaml::Rdf::Namespaces::DctermsNamespace
+                Lutaml::Rdf::Namespaces::DctermsNamespace,
+                SduSmart::Rdf::Namespaces::DcatNamespace
 
       subject { |m| "https://w3id.org/standards/smart/ontologies/core/#{m.id}" }
 
@@ -44,6 +46,10 @@ module SduSmart
       predicate :hasSupplement,
                 namespace: SduSmart::Rdf::Namespaces::SmartNamespace,
                 to: :has_supplement
+
+      predicate :distribution,
+                namespace: SduSmart::Rdf::Namespaces::DcatNamespace,
+                to: :distribution
     end
   end
 end

@@ -2,6 +2,7 @@
 
 module SduSmart
   module Taxonomy
+    autoload :Concept, "#{__dir__}/taxonomy/concept"
     autoload :BindingnessType, "#{__dir__}/taxonomy/bindingness_type"
     autoload :ProvisionType, "#{__dir__}/taxonomy/provision_type"
     autoload :PublicationComponentType, "#{__dir__}/taxonomy/publication_component_type"

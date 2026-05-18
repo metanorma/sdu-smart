@@ -2,23 +2,10 @@
 
 module SduSmart
   module Taxonomy
-    class ProvisionType < Lutaml::Model::Serializable
-      attribute :label, :string
-
-      VALUES = %w[governingProvision assertionalProvision].freeze
-
-      rdf do
-        namespace SduSmart::Rdf::Namespaces::SmartNamespace,
-                  Lutaml::Rdf::Namespaces::SkosNamespace
-
-        subject { |m| "https://w3id.org/standards/smart/taxonomies/provision-type/#{m.label}" }
-
-        type "smart:ProvisionType"
-
-        predicate :prefLabel,
-                  namespace: Lutaml::Rdf::Namespaces::SkosNamespace,
-                  to: :label
-      end
+    class ProvisionType < Concept
+      taxonomy "ProvisionType",
+               values: %w[governingProvision assertionalProvision],
+               subject_path: "provision-type"
     end
   end
 end
