@@ -1,0 +1,274 @@
+= SDU SMART Core Ontology in Ruby (sdu_smart)
+:toc:
+:toclevels: 2
+
+== Purpose
+
+Sdu_smart provides the
+https://w3id.org/standards/smart/ontologies/core/[SmartSDU Core Ontology]
+information model as a Ruby gem. It models the entities found in standards
+documents — provisions, terms, clauses, publications, agents — and serializes
+them to RDF formats (Turtle, JSON-LD).
+
+Domain gems (e.g. `isq` for ISO/IEC 80000) extend the base classes with
+domain-specific subclasses.
+
+Key features:
+
+* **Entity model**: Provision, Clause, TermEntry, PublicationDocument, Agent, Activity
+* **SKOS taxonomies**: Controlled vocabularies for bindingness, provision types, term forms
+* **RDF serialization**: Turtle output and round-trip parsing via `rdf do` mapping blocks
+* **Extensible**: Domain gems subclass `TermEntry` and `Provision` for domain-specific types
+
+Built on the https://github.com/lutaml/lutaml-model[lutaml-model] framework.
+
+== Installation
+
+Add to your Gemfile:
+
+[source,ruby]
+----
+gem "sdu_smart", "~> 0.1.0"
+----
+
+Then execute:
+
+[source,bash]
+----
+$ bundle install
+----
+
+Or install directly:
+
+[source,bash]
+----
+$ gem install sdu_smart
+----
+
+== Quick start
+
+=== Create entities
+
+[source,ruby]
+----
+require "sdu_smart"
+
+doc = SduSmart::PublicationDocument.new(
+  id: "iso-80000-1",
+  publication_type: "internationalStandard",
+  issued: "2022",
+)
+
+clause = SduSmart::Clause.new(
+  id: "clause-4",
+  title: "Quantities",
+  section_number: "4",
+  bindingness_type: "normative",
+)
+
+term = SduSmart::Term.new(
+  id: "term-length",
+  pronunciation: "lengθ",
+  term_form_type: "fullForm",
+)
+----
+
+=== Serialize to Turtle
+
+[source,ruby]
+----
+puts doc.to_turtle
+# <https://w3id.org/standards/smart/ontologies/core/iso-80000-1>
+#   a smart:PublicationDocument ;
+#   smart:hasPublicationType "internationalStandard" ;
+#   dcterms:issued "2022" .
+
+puts clause.to_turtle
+# <https://w3id.org/standards/smart/ontologies/core/clause-4>
+#   a smart:Clause ;
+#   smart:hasBindingnessType "normative" ;
+#   smart:hasSectionNumber "4" ;
+#   dcterms:title "Quantities" .
+----
+
+=== Round-trip serialization
+
+[source,ruby]
+----
+turtle = doc.to_turtle
+restored = SduSmart::PublicationDocument.from_turtle(turtle)
+restored.publication_type  # => "internationalStandard"
+restored.issued            # => "2022"
+----
+
+=== Use taxonomies
+
+[source,ruby]
+----
+bt = SduSmart::Taxonomy::BindingnessType.new(label: "normative")
+puts bt.to_turtle
+# <https://w3id.org/standards/smart/taxonomies/bindingness-type/normative>
+#   a smart:BindingnessType ;
+#   skos:prefLabel "normative" .
+
+# Valid values are defined as constants
+SduSmart::Taxonomy::BindingnessType::VALUES
+# => ["normative", "informative"]
+----
+
+== Architecture
+
+=== Class hierarchy
+
+All model classes inherit from `Lutaml::Model::Serializable` through the
+`SduSmart::Entity` base class:
+
+[source]
+----
+SduSmart::Entity
+├── Provision (abstract)
+│   ├── Statement
+│   ├── Instruction
+│   ├── Requirement
+│   ├── Recommendation
+│   ├── Permission
+│   ├── Capability
+│   ├── Possibility
+│   └── ExternalConstraint
+├── ProvisionSet
+│   └── Clause
+├── ProvisionSupplement
+├── TermEntry          ← extended by domain gems (e.g. isq)
+├── Term
+├── PublicationDocument
+├── Agent
+│   └── Organization
+└── Activity
+----
+
+=== Entity base class
+
+`SduSmart::Entity` (`lib/sdu_smart/entity.rb`) is the root of the hierarchy.
+It declares `attribute :id` and sets the RDF subject pattern:
+
+```
+https://w3id.org/standards/smart/ontologies/core/{id}
+```
+
+Every subclass inherits this subject pattern and adds its own `rdf:type` and
+predicates via `rdf do` blocks.
+
+=== Provision subtypes
+
+The 8 concrete provision subtypes (`Statement`, `Requirement`, etc.) share the
+same attributes (`bindingness_type`, `provision_type`, `is_part_of`, etc.) but
+each declares a distinct `rdf:type` (e.g. `smart:Statement`, `smart:Requirement`).
+
+=== Taxonomy classes
+
+`SduSmart::Taxonomy` contains SKOS concept classes. Unlike entity classes, they
+inherit directly from `Lutaml::Model::Serializable` (not `Entity`) and:
+
+* Declare a `VALUES` constant listing valid concept labels
+* Use `skos:prefLabel` for the label predicate
+* Use a subject pattern under `https://w3id.org/standards/smart/taxonomies/{type}/{label}`
+
+Taxonomy types and their values:
+
+[cols="1,3"]
+|===
+| Class | VALUES
+
+| `BindingnessType`
+| normative, informative
+
+| `ProvisionType`
+| governingProvision, assertionalProvision
+
+| `PublicationComponentType`
+| code, figure, mathematicalFormula, table, textual
+
+| `PublicationDocumentType`
+| internationalStandard, …
+
+| `ProvisionSupplementType`
+| example, footnote, note
+
+| `PartOfSpeechType`
+| adjective, adverb, noun, verb
+
+| `TermFormType`
+| abbreviation, acronym, equation, formula, fullForm, symbol, variant
+|===
+
+=== RDF namespaces
+
+Defined in `lib/sdu_smart/rdf/namespaces/` as `Lutaml::Rdf::Namespace` subclasses:
+
+[cols="1,2"]
+|===
+| Class | Prefix → IRI
+
+| `SmartNamespace`
+| `smart:` → `https://w3id.org/standards/smart/ontologies/core/`
+
+| `IsoIec80000Namespace`
+| `isoiec80000:` → `https://w3id.org/standards/isoiec80000/ontologies/core/`
+
+| `OaNamespace`
+| `oa:` → `http://www.w3.org/ns/oa#`
+|===
+
+Entity `rdf do` blocks also reference built-in lutaml namespaces (`dcterms:`,
+`skos:`) for predicates like `dcterms:issued` and `skos:prefLabel`.
+
+=== Extension pattern for domain gems
+
+`TermEntry` is the primary extension point. Domain gems subclass it and add
+domain-specific attributes and RDF types:
+
+[source,ruby]
+----
+# In a domain gem (e.g. isq)
+class Isq::Quantity < SduSmart::TermEntry
+  attribute :definition, :string
+  attribute :has_unit, :string
+
+  rdf do
+    type "isoiec80000:Quantity"
+    # ...
+  end
+end
+----
+
+== Development
+
+After checking out the repo, install dependencies and run the test suite:
+
+[source,bash]
+----
+$ bundle install
+$ bundle exec rspec
+----
+
+Run a single spec file or example:
+
+[source,bash]
+----
+$ bundle exec rspec spec/sdu_smart/core_classes_spec.rb
+$ bundle exec rspec spec/sdu_smart/core_classes_spec.rb:54
+----
+
+`reference-docs/` contains the authoritative SmartSDU information model (OWL
+ontology, SHACL shapes, SKOS taxonomies in Turtle format). Use it to verify
+that RDF predicates and class design match the specification.
+
+== Contributing
+
+Bug reports and pull requests are welcome on GitHub at
+https://github.com/metanorma/sdu-smart.
+
+== Copyright and license
+
+Copyright Ribose. https://opensource.org/licenses/BSD-2-Clause[BSD-2-Clause
+License].
