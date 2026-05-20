@@ -36,7 +36,7 @@ Subclass `rdf do` blocks **replace** (not merge with) parent `rdf do` blocks. Th
 
 ### Entity hierarchy
 
-- **Provision** (abstract) — 8 concrete subtypes in `lib/sdu_smart/provision/`, each with its own `rdf:type` (e.g. `smart:Statement`, `smart:Requirement`). Subtypes share the same attribute set but differ in RDF type. Has `dcat:distribution` for linking to distribution resources.
+- **Provision** (abstract) — 8 concrete subtypes in `lib/sdu_smart/provision/`, each defined via the `provision_subtype` class method (e.g. `provision_subtype "Statement"`). Subtypes share the same attribute set but differ in RDF type. Has `dcat:distribution` for linking to distribution resources.
 - **ProvisionSet → Clause** — `Clause` adds section/title/bindingness attributes.
 - **ProvisionSupplement** — note, example, footnote supplements.
 - **TermEntry** — designed to be subclassed by domain gems (e.g. `Isq::Quantity`, `Isq::Unit`, `Isq::MathConcept`). Has `skos:definition`, `dcterms:identifier`, `skos:scopeNote`, `skosxl:prefLabel`, `skosxl:altLabel`, `smart:deprecatedLabel`, `prov:qualifiedDerivation`.
