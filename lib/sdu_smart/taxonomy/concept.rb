@@ -31,9 +31,6 @@ module SduSmart
           new(label: label)
         end
 
-        def inherited(subclass)
-          super
-        end
       end
     end
   end

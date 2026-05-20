@@ -14,7 +14,7 @@ module SduSmart
 
       subject { |m| "https://w3id.org/standards/smart/ontologies/core/#{m.id}" }
 
-      type "smart:Term"
+      type ["smart:Term", "skosxl:Label"]
 
       predicate :pronunciation,
                 namespace: SduSmart::Rdf::Namespaces::SmartNamespace,
@@ -26,15 +26,18 @@ module SduSmart
 
       predicate :hasPartOfSpeechType,
                 namespace: SduSmart::Rdf::Namespaces::SmartNamespace,
-                to: :part_of_speech_type
+                to: :part_of_speech_type,
+                uri_reference: true
 
       predicate :hasTermFormType,
                 namespace: SduSmart::Rdf::Namespaces::SmartNamespace,
-                to: :term_form_type
+                to: :term_form_type,
+                uri_reference: true
 
       predicate :literalForm,
                 namespace: SduSmart::Rdf::Namespaces::SkosXlNamespace,
-                to: :literal_form
+                to: :literal_form,
+                lang_tagged: true
     end
   end
 end
