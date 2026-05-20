@@ -33,7 +33,8 @@ module SduSmart
 
       predicate :definition,
                 namespace: Lutaml::Rdf::Namespaces::SkosNamespace,
-                to: :definition
+                to: :definition,
+                lang_tagged: true
 
       predicate :identifier,
                 namespace: Lutaml::Rdf::Namespaces::DctermsNamespace,
@@ -41,23 +42,28 @@ module SduSmart
 
       predicate :scopeNote,
                 namespace: Lutaml::Rdf::Namespaces::SkosNamespace,
-                to: :scope_note
+                to: :scope_note,
+                lang_tagged: true
 
       predicate :deprecatedLabel,
                 namespace: SduSmart::Rdf::Namespaces::SmartNamespace,
-                to: :deprecated_label
+                to: :deprecated_label,
+                uri_reference: true
 
       predicate :prefLabel,
                 namespace: SduSmart::Rdf::Namespaces::SkosXlNamespace,
-                to: :pref_label
+                to: :pref_label,
+                uri_reference: true
 
       predicate :altLabel,
                 namespace: SduSmart::Rdf::Namespaces::SkosXlNamespace,
-                to: :alt_label
+                to: :alt_label,
+                uri_reference: true
 
       predicate :qualifiedDerivation,
                 namespace: SduSmart::Rdf::Namespaces::ProvNamespace,
-                to: :qualified_derivation
+                to: :qualified_derivation,
+                uri_reference: true
     end
   end
 end
