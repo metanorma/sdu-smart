@@ -2,12 +2,6 @@
 
 module SduSmart
   class Permission < Provision
-    rdf do
-      namespace SduSmart::Rdf::Namespaces::SmartNamespace
-
-      subject { |m| "https://w3id.org/standards/smart/ontologies/core/#{m.id}" }
-
-      type "smart:Permission"
-    end
+    provision_subtype "Permission"
   end
 end

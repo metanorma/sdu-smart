@@ -2,12 +2,6 @@
 
 module SduSmart
   class Instruction < Provision
-    rdf do
-      namespace SduSmart::Rdf::Namespaces::SmartNamespace
-
-      subject { |m| "https://w3id.org/standards/smart/ontologies/core/#{m.id}" }
-
-      type "smart:Instruction"
-    end
+    provision_subtype "Instruction"
   end
 end

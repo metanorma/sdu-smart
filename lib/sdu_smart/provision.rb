@@ -51,5 +51,15 @@ module SduSmart
                 namespace: SduSmart::Rdf::Namespaces::DcatNamespace,
                 to: :distribution
     end
+
+    def self.provision_subtype(rdf_name)
+      rdf do
+        namespace SduSmart::Rdf::Namespaces::SmartNamespace
+
+        subject { |m| "https://w3id.org/standards/smart/ontologies/core/#{m.id}" }
+
+        type "smart:#{rdf_name}"
+      end
+    end
   end
 end

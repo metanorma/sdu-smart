@@ -1,42 +1,58 @@
 # frozen_string_literal: true
 
 RSpec.describe "Turtle round-trip" do
-  it "round-trips PublicationDocument" do
+  it "round-trips PublicationDocument with all properties" do
     doc = SduSmart::PublicationDocument.new(
       id: "iso-80000-3",
       publication_type: "internationalStandard",
       issued: "2019",
+      has_version: ["v1", "v2"],
+      replaces: "iso-80000-3-2006",
     )
     restored = SduSmart::PublicationDocument.from_turtle(doc.to_turtle)
     expect(restored.publication_type).to eq("internationalStandard")
     expect(restored.issued).to eq("2019")
+    expect(restored.has_version).to include("v1", "v2")
+    expect(restored.replaces).to eq("iso-80000-3-2006")
   end
 
-  it "round-trips Provision" do
+  it "round-trips Provision with all properties" do
     prov = SduSmart::Provision.new(
       id: "prov-1",
       bindingness_type: "normative",
       provision_type: "governingProvision",
+      publication_component_type: "textual",
+      is_part_of: "clause-4",
+      has_supplement: ["note-1", "note-2"],
+      distribution: ["dist-1"],
     )
     restored = SduSmart::Provision.from_turtle(prov.to_turtle)
     expect(restored.bindingness_type).to eq("normative")
     expect(restored.provision_type).to eq("governingProvision")
+    expect(restored.publication_component_type).to eq("textual")
+    expect(restored.is_part_of).to eq("clause-4")
+    expect(restored.has_supplement).to include("note-1", "note-2")
+    expect(restored.distribution).to include("dist-1")
   end
 
-  it "round-trips Clause" do
+  it "round-trips Clause with all properties" do
     clause = SduSmart::Clause.new(
       id: "clause-4",
       title: "Quantities",
       section_number: "4",
       bindingness_type: "normative",
+      is_part_of: "iso-80000-3",
+      is_successor_of: "clause-3",
     )
     restored = SduSmart::Clause.from_turtle(clause.to_turtle)
     expect(restored.title).to eq("Quantities")
     expect(restored.section_number).to eq("4")
     expect(restored.bindingness_type).to eq("normative")
+    expect(restored.is_part_of).to eq("iso-80000-3")
+    expect(restored.is_successor_of).to eq("clause-3")
   end
 
-  it "round-trips Term" do
+  it "round-trips Term with all properties" do
     term = SduSmart::Term.new(
       id: "term-length",
       pronunciation: "lengθ",
@@ -50,17 +66,20 @@ RSpec.describe "Turtle round-trip" do
     expect(restored.term_form_type).to eq("fullForm")
     expect(restored.part_of_speech_type).to eq("noun")
     expect(restored.literal_form).to eq("length")
+    expect(restored.used_in_country).to include("GB", "US")
   end
 
-  it "round-trips ProvisionSupplement" do
+  it "round-trips ProvisionSupplement with all properties" do
     sup = SduSmart::ProvisionSupplement.new(
       id: "note-3-1",
       supplement_type: "note",
       bindingness_type: "informative",
+      publication_component_type: "textual",
     )
     restored = SduSmart::ProvisionSupplement.from_turtle(sup.to_turtle)
     expect(restored.supplement_type).to eq("note")
     expect(restored.bindingness_type).to eq("informative")
+    expect(restored.publication_component_type).to eq("textual")
   end
 
   it "round-trips Taxonomy concept" do
@@ -80,17 +99,19 @@ RSpec.describe "Turtle round-trip" do
     expect(restored.has_body).to eq("prov-1")
   end
 
-  it "round-trips SpecificResource" do
+  it "round-trips SpecificResource with all properties" do
     sr = SduSmart::SpecificResource.new(
       id: "sr-1",
       has_source: "doc-1",
       has_selector: "sel-1",
+      is_successor_of: "sr-0",
       value: "some text",
       format: "text/html",
     )
     restored = SduSmart::SpecificResource.from_turtle(sr.to_turtle)
     expect(restored.has_source).to eq("doc-1")
     expect(restored.has_selector).to eq("sel-1")
+    expect(restored.is_successor_of).to eq("sr-0")
     expect(restored.value).to eq("some text")
     expect(restored.format).to eq("text/html")
   end
@@ -112,27 +133,28 @@ RSpec.describe "Turtle round-trip" do
     expect(restored.change_note).to eq("Updated definition")
   end
 
-  it "round-trips TermEntry with new properties" do
+  it "round-trips TermEntry with all properties" do
     entry = SduSmart::TermEntry.new(
       id: "te1",
       definition: "length of a line",
       identifier: "3-1",
       scope_note: "Applies to vectors",
+      bindingness_type: "normative",
+      is_part_of: "clause-3-1",
+      deprecated_label: ["old-term"],
+      pref_label: ["term-length"],
+      alt_label: ["term-len"],
+      qualified_derivation: ["deriv-1"],
     )
     restored = SduSmart::TermEntry.from_turtle(entry.to_turtle)
     expect(restored.definition).to eq("length of a line")
     expect(restored.identifier).to eq("3-1")
     expect(restored.scope_note).to eq("Applies to vectors")
-  end
-
-  it "round-trips Provision with distribution" do
-    prov = SduSmart::Provision.new(
-      id: "prov-1",
-      bindingness_type: "normative",
-      distribution: ["dist-1"],
-    )
-    restored = SduSmart::Provision.from_turtle(prov.to_turtle)
     expect(restored.bindingness_type).to eq("normative")
-    expect(restored.distribution).to include("dist-1")
+    expect(restored.is_part_of).to eq("clause-3-1")
+    expect(restored.deprecated_label).to include("old-term")
+    expect(restored.pref_label).to include("term-length")
+    expect(restored.alt_label).to include("term-len")
+    expect(restored.qualified_derivation).to include("deriv-1")
   end
 end
