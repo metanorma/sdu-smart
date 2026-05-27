@@ -12,14 +12,14 @@ RSpec.describe SduSmart::Rdf::Namespaces::SmartNamespace do
   end
 end
 
-RSpec.describe SduSmart::Rdf::Namespaces::IsoIec80000Namespace do
-  it "has prefix 'isoiec80000'" do
-    expect(described_class.prefix).to eq("isoiec80000")
+RSpec.describe SduSmart::Rdf::Namespaces::IsqNamespace do
+  it "has prefix 'isq'" do
+    expect(described_class.prefix).to eq("isq")
   end
 
   it "has correct URI" do
     expect(described_class.uri).to eq(
-      "https://w3id.org/standards/isoiec80000/ontologies/core/",
+      "https://w3id.org/standards/isq/ontologies/core/",
     )
   end
 end
